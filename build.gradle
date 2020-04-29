@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainClassName = 'ApplicationKt'
+    mainClassName = 'kotlin.ApplicationKt'
 }
 
 group 'kotlin'
