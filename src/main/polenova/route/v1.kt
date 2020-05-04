@@ -51,7 +51,6 @@ fun Routing.v1() {
                 author = input.author,
                 content = input.content,
                 created = input.created,
-                source = input.source,
                 sourceHTTP = input.sourceHTTP,
                 typePost = input.postType
             )
@@ -59,7 +58,8 @@ fun Routing.v1() {
             call.respond(response)
         }
         delete("/{id}") {
-            TODO()
+            val id = call.parameters["id"]?.toLongOrNull() ?: throw ParameterConversionException("id", "Long")
+            repo.removeById(id)
         }
     }
 }

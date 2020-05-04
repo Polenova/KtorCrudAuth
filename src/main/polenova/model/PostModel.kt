@@ -1,20 +1,26 @@
 package model
 
-data class PostModel (
+import java.time.ZonedDateTime
+
+data class PostModel(
     val id: Long,
     val author: String,
     val content: String? = null,
-    val created: String,
-    val location: Pair<Double, Double>? = null,
+    val created: ZonedDateTime? = null,
+    val location: Coordinate? = null,
 
     var typePost: TypePost = TypePost.POST,
-    val source: PostModel? = null,
     val sourceHTTP: String? = null,
 
     var likeByMe: Boolean = false,
     var countLiked: Int = 0,
     var countComment: Int = 0,
     var countShare: Int = 0
+)
+
+data class Coordinate (
+    val latitude: String,
+    val longitude: String
 )
 
 enum class TypePost {

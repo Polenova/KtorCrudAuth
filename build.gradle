@@ -4,10 +4,10 @@ plugins {
 }
 
 application {
-    mainClassName = 'kotlin.ApplicationKt'
+    mainClassName = 'polenova.ApplicationKt'
 }
 
-group 'kotlin'
+group 'polenova'
 version '1.0-SNAPSHOT'
 
 repositories {
