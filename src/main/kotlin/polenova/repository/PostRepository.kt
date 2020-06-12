@@ -1,6 +1,6 @@
-package repository
+package polenova.repository
 
-import model.PostModel
+import polenova.model.PostModel
 
 interface PostRepository {
     suspend fun getAll(): List<PostModel>

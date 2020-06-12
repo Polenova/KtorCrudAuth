@@ -1,14 +1,16 @@
-package dto
+package polenova.dto
 
-import model.PostModel
-import model.TypePost
+import polenova.model.Coordinate
+import polenova.model.PostModel
+import polenova.model.TypePost
+import java.time.ZonedDateTime
 
 data class PostResponseDto(
     val id: Long,
     val author: String,
     val content: String?,
-    val created: String,
-    val location: Pair<Double, Double>? = null,
+    val created: ZonedDateTime? = null,
+    val location: Coordinate? = null,
 
     var typePost: TypePost = TypePost.POST,
     val source: PostModel? = null,
@@ -27,7 +29,6 @@ data class PostResponseDto(
             created = model.created,
             location = model.location,
             typePost = model.typePost,
-            source = model.source,
             sourceHTTP = model.sourceHTTP,
             likeByMe = model.likeByMe,
             countLiked = model.countLiked,

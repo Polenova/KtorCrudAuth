@@ -1,7 +1,7 @@
-package dto
+package polenova.dto
 
-import model.PostModel
-import model.TypePost
+import polenova.model.PostModel
+import polenova.model.TypePost
 
 class PostRequestDto (
     val id: Long,
@@ -11,6 +11,4 @@ class PostRequestDto (
     val postType: TypePost = TypePost.POST,
     val source: PostModel? = null,
     val sourceHTTP: String? = null
-) {
-
-}
+)

@@ -1,4 +1,4 @@
-package model
+package polenova.model
 
 import java.time.ZonedDateTime
 
@@ -11,6 +11,7 @@ data class PostModel(
 
     var typePost: TypePost = TypePost.POST,
     val sourceHTTP: String? = null,
+    val user: UserModel? = null,
 
     var likeByMe: Boolean = false,
     var countLiked: Int = 0,
