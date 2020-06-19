@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
+import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -19,13 +20,16 @@ class ApplicationTest {
     private val multipartContentType =
         ContentType.MultiPart.FormData.withParameter("boundary", multipartBoundary).toString()
     private val uploadPath = Files.createTempDirectory("test").toString()
+    @KtorExperimentalAPI
     private val configure: Application.() -> Unit = {
         (environment.config as MapApplicationConfig).apply {
-            put("ncraft.upload.dir", uploadPath)
+            put("polenova.upload.dir", uploadPath)
         }
         module()
     }
 
+
+    @KtorExperimentalAPI
     @Test
     fun testAuth() {
         withTestApplication(configure) {
@@ -59,5 +63,4 @@ class ApplicationTest {
             }
         }
     }
-
 }

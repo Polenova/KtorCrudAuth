@@ -22,7 +22,7 @@ data class PostResponseDto(
     var countShare: Int = 0
 ) {
     companion object {
-        fun fromModel(model: PostModel) = PostResponseDto(
+        fun fromModel(model: PostModel, userId: Long) = PostResponseDto(
             id = model.id,
             author = model.author,
             content = model.content,

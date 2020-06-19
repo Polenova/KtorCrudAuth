@@ -5,6 +5,7 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
+import io.ktor.auth.basic
 import io.ktor.auth.jwt.jwt
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.NotFoundException
@@ -15,7 +16,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.server.cio.EngineMain
-import kotlinx.coroutines.runBlocking
+import io.ktor.util.KtorExperimentalAPI
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.instance
@@ -29,16 +30,14 @@ import polenova.repository.PostRepository
 import polenova.repository.PostRepositoryInMemoryWithMutexImpl
 import polenova.repository.UserRepository
 import polenova.repository.UserRepositoryInMemoryWithMutexImpl
-import polenova.service.FileService
-import polenova.service.JWTTokenService
-import polenova.service.PostService
-import polenova.service.UserService
+import polenova.service.*
 import javax.naming.ConfigurationException
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
+@KtorExperimentalAPI
 fun Application.module() {
     install(ContentNegotiation) {
         gson {
@@ -91,30 +90,68 @@ fun Application.module() {
     }
 
     install(KodeinFeature) {
-        constant(tag ="upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")?.getString() ?: throw ConfigurationException("Upload dir is not specified"))
+        constant(tag = "upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")?.getString()
+            ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
         bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
         bind<PostRepository>() with eagerSingleton { PostRepositoryInMemoryWithMutexImpl() }
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
         bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithMutexImpl() }
-        bind<UserService>() with eagerSingleton { UserService(instance(), instance(), instance()).apply {
-            runBlocking {
-                this@apply.save("vasya", "password")
+        bind<UserService>() with eagerSingleton {UserService(instance(), instance(), instance())}
+
+        constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")?.getString()
+            ?: throw ConfigurationException("FCM Password is not specified"))
+        constant(tag = "fcm-salt") with (environment.config.propertyOrNull("polenova.fcm.salt")?.getString()
+            ?: throw ConfigurationException("FCM Salt is not specified"))
+        constant(tag = "fcm-db-url") with (environment.config.propertyOrNull("polenova.fcm.db-url")?.getString()
+            ?: throw ConfigurationException("FCM DB Url is not specified"))
+        constant(tag = "fcm-path") with (environment.config.propertyOrNull("polenova.fcm.path")?.getString()
+            ?: throw ConfigurationException("FCM JSON Path is not specified"))
+
+        bind<FCMService>() with eagerSingleton {
+            FCMService(
+                instance(tag = "fcm-db-url"),
+                instance(tag = "fcm-password"),
+                instance(tag = "fcm-salt"),
+                instance(tag = "fcm-path")
+            )
+        }
+        bind<RoutingV1>() with eagerSingleton {
+            RoutingV1(
+                instance(tag = "upload-dir"),
+                instance(),
+                instance(),
+                instance(),
+                instance()
+            )
+        }
+
+        install(Authentication) {
+            jwt {
+                val jwtService by kodein().instance<JWTTokenService>()
+                verifier(jwtService.verifier)
+                val userService by kodein().instance<UserService>()
+
+                validate {
+                    val id = it.payload.getClaim("id").asLong()
+                    val password = it.payload.getClaim("password").asString()
+                    userService.getModelByIdPassword(id, password)
+                }
             }
-        } }
-        bind<RoutingV1>() with eagerSingleton { RoutingV1(instance(tag = "upload-dir"), instance(), instance(), instance()) }
-    }
+            basic("basic") {
 
-    install(Authentication) {
-        jwt {
-            val jwtService by kodein().instance<JWTTokenService>()
-            verifier(jwtService.verifier)
-            val userService by kodein().instance<UserService>()
+                val encoder by kodein().instance<PasswordEncoder>()
+                val userService by kodein().instance<UserService>()
+                validate { credentials ->
+                    val user = userService.getByUserName(credentials.name)
 
-            validate {
-                val id = it.payload.getClaim("id").asLong()
-                userService.getModelById(id)
+                    if (encoder.matches(credentials.password, user?.password)) {
+                        user
+                    } else {
+                        null
+                    }
+                }
             }
         }
     }

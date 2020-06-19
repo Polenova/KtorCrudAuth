@@ -1,11 +1,12 @@
 package polenova.repository
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import polenova.model.UserModel
 
 class UserRepositoryInMemoryWithMutexImpl : UserRepository {
-    private var nextId = 1L
+    private var nextId = atomic(0L)
     private val items = mutableListOf<UserModel>()
     private val mutex = Mutex()
 
@@ -33,11 +34,20 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
         }
     }
 
+    override suspend fun getByIdPassword(id: Long, password: String): UserModel? {
+        val item = items.find { it.id == id }
+        return if (password == item?.password) {
+            item
+        } else {
+            null
+        }
+    }
+
     override suspend fun save(item: UserModel): UserModel {
         mutex.withLock {
             return when (val index = items.indexOfFirst { it.id == item.id }) {
                 -1 -> {
-                    val copy = item.copy(id = nextId++)
+                    val copy = item.copy(id = nextId.incrementAndGet())
                     items.add(copy)
                     copy
                 }
@@ -46,6 +56,21 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
                     items[index] = copy
                     copy
                 }
+            }
+        }
+    }
+
+    override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
+        return when (val index = items.indexOfFirst { it.id == id}) {
+            -1 -> {
+                null
+            }
+            else -> {
+                val copy = items[index].copy(firebaseToken = firebaseToken)
+                mutex.withLock {
+                    items[index] = copy
+                }
+                copy
             }
         }
     }

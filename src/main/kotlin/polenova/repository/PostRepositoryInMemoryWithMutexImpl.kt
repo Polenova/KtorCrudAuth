@@ -1,5 +1,6 @@
 package polenova.repository
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import polenova.model.PostModel
@@ -8,7 +9,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class PostRepositoryInMemoryWithMutexImpl : PostRepository {
-    private var nextId = 1L
+    private var nextId = atomic(0L)
     private val items = mutableListOf<PostModel>()
     private val mutex = Mutex()
 
@@ -35,12 +36,11 @@ class PostRepositoryInMemoryWithMutexImpl : PostRepository {
                     val dateCreated = LocalDateTime.now()
                     val dateId = ZoneId.of("Europe/Moscow")
                     val zonedDateTime = ZonedDateTime.of(dateCreated, dateId)
-                    val copy = item.copy(id = nextId++, created = zonedDateTime)
+                    val copy = item.copy(id = nextId.incrementAndGet(), created = zonedDateTime)
                     items.add(copy)
                     copy
                 }
                 else -> {
-                    // TODO:
                     items[index] = item
                     item
                 }
@@ -62,7 +62,7 @@ class PostRepositoryInMemoryWithMutexImpl : PostRepository {
         }
     }
 
-    override suspend fun commentById(id: Long): PostModel? {
+    override suspend fun commentById(id: Long, userId: Long): PostModel? {
         return when (val index = items.indexOfFirst { it.id == id }) {
             -1 -> null
             else -> {
@@ -79,7 +79,7 @@ class PostRepositoryInMemoryWithMutexImpl : PostRepository {
         }
     }
 
-    override suspend fun shareById(id: Long): PostModel? {
+    override suspend fun shareById(id: Long, userId: Long): PostModel? {
         return when (val index = items.indexOfFirst { it.id == id }) {
             -1 -> null
             else -> {
@@ -92,6 +92,41 @@ class PostRepositoryInMemoryWithMutexImpl : PostRepository {
                     println(index)
                 }
                 copy
+            }
+        }
+    }
+
+    override suspend fun getLastContent(): List<PostModel> {
+        try {
+            if (items.isEmpty()) {
+                return emptyList()
+            }
+            return getAll().slice(0..4)
+        } catch (e: IndexOutOfBoundsException) {
+            return getAll()
+        }    }
+
+    override suspend fun getPostsAfter(id: Long): List<PostModel>? {
+        val item = getById(id)
+        val itemsReversed = getAll()
+        return when (val index = itemsReversed.indexOfFirst { it.id == item?.id }) {
+            -1 -> null
+            0 -> emptyList()
+            else -> itemsReversed.slice(0 until index)
+        }    }
+
+    override suspend fun getPostsBefore(id: Long): List<PostModel>? {
+        val item = getById(id)
+        val itemsReversed = getAll()
+        return when (val index = itemsReversed.indexOfFirst { it.id == item?.id }) {
+            -1-> null
+            (items.size - 1) -> emptyList()
+            else -> {
+                try {
+                    itemsReversed.slice((index + 1)..(index + 5))
+                } catch (e: IndexOutOfBoundsException) {
+                    itemsReversed.slice((index + 1) until items.size)
+                }
             }
         }
     }
