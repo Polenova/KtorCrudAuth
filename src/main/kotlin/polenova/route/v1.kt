@@ -87,7 +87,7 @@ class RoutingV1(
                             val response = postService.getById(id, me!!.id)
                             call.respond(response)
                         }
-                        get("/recent") {
+                        get("/lastContent") {
                             val me = call.authentication.principal<UserModel>()
                             val response = postService.getLastContent(me!!.id)
                             call.respond(response)
@@ -136,10 +136,18 @@ class RoutingV1(
                             val response = postService.shareById(id, me, input)
                             call.respond(response)
                         }
+                        post("/{id}") {
+                            val me = call.authentication.principal<UserModel>()!!
+                            val id = call.parameters["id"]?.toLongOrNull() ?: throw ParameterConversionException(
+                                "id",
+                                "Long"
+                            )
+                            val input = call.receive<PostRequestDto>()
+                            postService.saveById(id, input, me!!)
+                            call.respond(HttpStatusCode.OK)
+                        }
                         delete("/{id}/post") {
                             val me = call.authentication.principal<UserModel>()!!
-                            // в me - информация о текущем пользователе
-                            //TODO()
                             val id = call.parameters["id"]?.toLongOrNull() ?: throw ParameterConversionException(
                                 "id",
                                 "Long"

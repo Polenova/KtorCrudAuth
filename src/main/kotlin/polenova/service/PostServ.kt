@@ -4,6 +4,7 @@ import io.ktor.features.NotFoundException
 import io.ktor.util.KtorExperimentalAPI
 import polenova.dto.PostRequestDto
 import polenova.dto.PostResponseDto
+import polenova.exception.UserAccessException
 import polenova.model.PostModel
 import polenova.model.UserModel
 import polenova.repository.PostRepository
@@ -57,6 +58,17 @@ class PostService(private val repo: PostRepository) {
 
     suspend fun save(input: PostRequestDto, me: UserModel): PostResponseDto {
         val model = PostModel(id = input.id, author = input.author, content = input.content)
+        return PostResponseDto.fromModel(repo.save(model), me.id)
+    }
+
+    @KtorExperimentalAPI
+    suspend fun saveById(id: Long, input: PostRequestDto, me: UserModel): PostResponseDto {
+        val model = PostModel(id = input.id, author = input.author, content = input.content)
+        val existingPostModel = repo.getById(id) ?: throw NotFoundException()
+        if (existingPostModel.user?.id != me.id) {
+            throw UserAccessException("Access denied, Another user posted this post")
+
+        }
         return PostResponseDto.fromModel(repo.save(model), me.id)
     }
 

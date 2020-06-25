@@ -17,6 +17,7 @@ import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.server.cio.EngineMain
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.runBlocking
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.instance
@@ -98,7 +99,11 @@ fun Application.module() {
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
         bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithMutexImpl() }
-        bind<UserService>() with eagerSingleton {UserService(instance(), instance(), instance())}
+        bind<UserService>() with eagerSingleton {UserService(instance(), instance(), instance()).apply {
+            runBlocking {
+                this@apply.save("vasya", "password")
+            }
+        }}
 
         constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")?.getString()
             ?: throw ConfigurationException("FCM Password is not specified"))
