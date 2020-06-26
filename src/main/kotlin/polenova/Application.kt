@@ -39,28 +39,27 @@ fun main(args: Array<String>) {
 }
 
 @KtorExperimentalAPI
-fun Application.module() {
+fun Application.module(testing: Boolean = false) {
     install(ContentNegotiation) {
         gson {
             setPrettyPrinting()
             serializeNulls()
         }
     }
-
     install(StatusPages) {
         exception<NotImplementedError> { e ->
             call.respond(HttpStatusCode.NotImplemented)
             throw e
         }
-        exception<ParameterConversionException> {e ->
+        exception<ParameterConversionException> { e ->
             call.respond(HttpStatusCode.BadRequest)
             throw e
         }
-        exception<Throwable> {e ->
+        exception<Throwable> { e ->
             call.respond(HttpStatusCode.InternalServerError)
             throw e
         }
-        exception<NotFoundException> {e ->
+        exception<NotFoundException> { e ->
             call.respond(HttpStatusCode.NotFound)
             throw e
         }
@@ -89,9 +88,9 @@ fun Application.module() {
             throw error
         }
     }
-
     install(KodeinFeature) {
-        constant(tag = "upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")?.getString()
+        constant(tag = "upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")
+            ?.getString()
             ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
         bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
@@ -99,28 +98,42 @@ fun Application.module() {
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
         bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithMutexImpl() }
-        bind<UserService>() with eagerSingleton {UserService(instance(), instance(), instance()).apply {
-            runBlocking {
-                this@apply.save("vasya", "password")
+        bind<UserService>() with eagerSingleton {
+            UserService(instance(), instance(), instance()).apply {
+                runBlocking {
+                    this@apply.save("vasya", "password")
+                }
             }
-        }}
-
-        constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")?.getString()
+        }
+        constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")
+            ?.getString()
             ?: throw ConfigurationException("FCM Password is not specified"))
-        constant(tag = "fcm-salt") with (environment.config.propertyOrNull("polenova.fcm.salt")?.getString()
+        constant(tag = "fcm-salt") with (environment.config.propertyOrNull("polenova.fcm.salt")
+            ?.getString()
             ?: throw ConfigurationException("FCM Salt is not specified"))
-        constant(tag = "fcm-db-url") with (environment.config.propertyOrNull("polenova.fcm.db-url")?.getString()
+        constant(tag = "fcm-db-url") with (environment.config.propertyOrNull("polenova.fcm.db-url")
+            ?.getString()
             ?: throw ConfigurationException("FCM DB Url is not specified"))
-        constant(tag = "fcm-path") with (environment.config.propertyOrNull("polenova.fcm.path")?.getString()
+        constant(tag = "fcm-path") with (environment.config.propertyOrNull("polenova.fcm.path")
+            ?.getString()
             ?: throw ConfigurationException("FCM JSON Path is not specified"))
-
-        bind<FCMService>() with eagerSingleton {
-            FCMService(
-                instance(tag = "fcm-db-url"),
-                instance(tag = "fcm-password"),
-                instance(tag = "fcm-salt"),
-                instance(tag = "fcm-path")
-            )
+        bind<PushService>() with eagerSingleton {
+            if (testing) {
+                object : PushService {
+                    override suspend fun send(
+                        recipientId: Long,
+                        recipientToken: String,
+                        title: String
+                    ) = Unit
+                }
+            } else {
+                FCMService(
+                    instance(tag = "fcm-db-url"),
+                    instance(tag = "fcm-password"),
+                    instance(tag = "fcm-salt"),
+                    instance(tag = "fcm-path")
+                )
+            }
         }
         bind<RoutingV1>() with eagerSingleton {
             RoutingV1(
@@ -131,36 +144,31 @@ fun Application.module() {
                 instance()
             )
         }
-
-        install(Authentication) {
-            jwt {
-                val jwtService by kodein().instance<JWTTokenService>()
-                verifier(jwtService.verifier)
-                val userService by kodein().instance<UserService>()
-
-                validate {
-                    val id = it.payload.getClaim("id").asLong()
-                    val password = it.payload.getClaim("password").asString()
-                    userService.getModelByIdPassword(id, password)
-                }
+    }
+    install(Authentication) {
+        jwt {
+            val jwtService by kodein().instance<JWTTokenService>()
+            verifier(jwtService.verifier)
+            val userService by kodein().instance<UserService>()
+            validate {
+                val id = it.payload.getClaim("id").asLong()
+                val password = it.payload.getClaim("password").asString()
+                userService.getModelByIdPassword(id, password)
             }
-            basic("basic") {
-
-                val encoder by kodein().instance<PasswordEncoder>()
-                val userService by kodein().instance<UserService>()
-                validate { credentials ->
-                    val user = userService.getByUserName(credentials.name)
-
-                    if (encoder.matches(credentials.password, user?.password)) {
-                        user
-                    } else {
-                        null
-                    }
+        }
+        basic("basic") {
+            val encoder by kodein().instance<PasswordEncoder>()
+            val userService by kodein().instance<UserService>()
+            validate { credentials ->
+                val user = userService.getByUserName(credentials.name)
+                if (encoder.matches(credentials.password, user?.password)) {
+                    user
+                } else {
+                    null
                 }
             }
         }
     }
-
     install(Routing) {
         val routingV1 by kodein().instance<RoutingV1>()
         routingV1.setup(this)

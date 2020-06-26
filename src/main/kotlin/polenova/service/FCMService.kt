@@ -13,23 +13,28 @@ import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 
+interface PushService {
+    suspend fun send(recipientId: Long, recipientToken: String, title: String)
+}
+
 class FCMService(
     dbUrl: String,
     password: String,
     salt: String,
     path: String
-) {
+) : PushService {
     init {
-        val decryptor = Encryptors.stronger(password, Hex.encodeHexString(salt.toByteArray(Charsets.UTF_8)))
+        val decryptor =
+            Encryptors.stronger(password, Hex.encodeHexString(salt.toByteArray(Charsets.UTF_8)))
         val decrypted = decryptor.decrypt(Files.readAllBytes(Paths.get(path)))
-
         val options = FirebaseOptions.Builder()
             .setCredentials(GoogleCredentials.fromStream(ByteArrayInputStream(decrypted)))
             .setDatabaseUrl(dbUrl)
             .build()
         FirebaseApp.initializeApp(options)
     }
-    suspend fun send(recipientId: Long, recipientToken: String, title: String) {
+
+    override suspend fun send(recipientId: Long, recipientToken: String, title: String) {
         withContext(Dispatchers.IO) {
             try {
                 val message = Message.builder()
