@@ -33,9 +33,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-admin:6.10.0'
 }
 
-test {
-    useJUnitPlatform()
-}
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }

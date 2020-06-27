@@ -60,7 +60,7 @@ class RoutingV1(
                             val token = call.receive<TokenDto>()
                             userService.saveFirebaseToken(me!!.id, token.token)
                             call.respond(HttpStatusCode.OK)
-                            pushService.send(me!!.id, token.token, "hello")
+                            pushService.send(me.id, token.token, "hello")
                         }
                     }
                     route("/posts") {
@@ -133,7 +133,7 @@ class RoutingV1(
                                 "Long"
                             )
                             val input = call.receive<PostRequestDto>()
-                            postService.saveById(id, input, me!!)
+                            postService.saveById(id, input, me)
                             call.respond(HttpStatusCode.OK)
                         }
                         delete("/{id}/post") {
