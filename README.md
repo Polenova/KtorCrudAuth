@@ -1,1 +1,1 @@
-https://hw7ktor.herokuapp.com/
+https://ktor-crud-auth.herokuapp.com/
