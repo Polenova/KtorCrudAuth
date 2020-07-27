@@ -59,20 +59,6 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
             }
         }
     }
-
-    override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
-        return when (val index = items.indexOfFirst { it.id == id}) {
-            -1 -> {
-                null
-            }
-            else -> {
-                val copy = items[index].copy(firebaseToken = firebaseToken)
-                mutex.withLock {
-                    items[index] = copy
-                }
-                copy
-            }
-        }
-    }
+    
 }
 
