@@ -93,7 +93,7 @@ fun Application.module(testing: Boolean = false) {
             ?.getString()
             ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
-        bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
+        //bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
         bind<PostRepository>() with eagerSingleton { PostRepositoryInMemoryWithMutexImpl() }
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
@@ -105,7 +105,7 @@ fun Application.module(testing: Boolean = false) {
                 }
             }
         }
-        constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")
+        /*constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")
             ?.getString()
             ?: throw ConfigurationException("FCM Password is not specified"))
         constant(tag = "fcm-salt") with (environment.config.propertyOrNull("polenova.fcm.salt")
@@ -134,13 +134,13 @@ fun Application.module(testing: Boolean = false) {
                     instance(tag = "fcm-path")
                 )
             }
-        }
+        }*/
         bind<RoutingV1>() with eagerSingleton {
             RoutingV1(
                 instance(tag = "upload-dir"),
                 instance(),
                 instance(),
-                instance(),
+                //instance(),
                 instance()
             )
         }

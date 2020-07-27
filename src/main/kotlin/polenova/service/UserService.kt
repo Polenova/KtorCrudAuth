@@ -72,8 +72,8 @@ class UserService(
         }
     }
 
-    @KtorExperimentalAPI
+    /*@KtorExperimentalAPI
     suspend fun saveFirebaseToken(id: Long, firebaseToken: String) {
         repo.saveFirebaseToken(id, firebaseToken) ?: throw NotFoundException()
-    }
+    }*/
 }
