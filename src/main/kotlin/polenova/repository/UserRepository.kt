@@ -9,5 +9,4 @@ interface UserRepository {
     suspend fun getByUsername(username: String): UserModel?
     suspend fun getByIdPassword(id: Long, password: String): UserModel?
     suspend fun save(item: UserModel): UserModel
-    suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel?
 }
