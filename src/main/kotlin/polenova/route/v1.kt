@@ -13,7 +13,6 @@ import io.ktor.util.KtorExperimentalAPI
 import polenova.dto.AuthenticationRequestDto
 import polenova.dto.PasswordChangeRequestDto
 import polenova.dto.PostRequestDto
-import polenova.dto.TokenDto
 import polenova.model.UserModel
 import polenova.service.*
 
