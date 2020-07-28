@@ -60,7 +60,7 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
         }
     }
 
-    /*override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
+    override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
         return when (val index = items.indexOfFirst { it.id == id}) {
             -1 -> {
                 null
@@ -73,6 +73,6 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
                 copy
             }
         }
-    }*/
+    }
 }
 

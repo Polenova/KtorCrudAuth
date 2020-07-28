@@ -21,7 +21,6 @@ class RoutingV1(
     private val postService: PostService,
     private val fileService: FileService,
     private val userService: UserService
-    //private val pushService: PushService
 ) {
     @KtorExperimentalAPI
     fun setup(configuration: Routing) {
@@ -52,16 +51,7 @@ class RoutingV1(
                             val response = userService.changePassword(me!!.id, input)
                             call.respond(response)
                         }
-                    }
-                    /*route("/firebase-token") {
-                        post {
-                            val me = call.authentication.principal<UserModel>()
-                            val token = call.receive<TokenDto>()
-                            userService.saveFirebaseToken(me!!.id, token.token)
-                            call.respond(HttpStatusCode.OK)
-                            pushService.send(me.id, token.token, "hello")
-                        }
-                    }*/
+                    }                    
                     route("/posts") {
                         get {
                             val me = call.authentication.principal<UserModel>()
