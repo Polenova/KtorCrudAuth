@@ -1,39 +1,53 @@
 package polenova.dto
 
-import polenova.model.Coordinate
-import polenova.model.PostModel
-import polenova.model.TypePost
+import polenova.model.*
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
-data class PostResponseDto(
+class PostResponseDto(
     val id: Long,
-    val author: String,
-    val content: String?,
-    val created: ZonedDateTime? = null,
-    val location: Coordinate? = null,
-
-    var typePost: TypePost = TypePost.POST,
-    val source: PostModel? = null,
-    val sourceHTTP: String? = null,
-
-    var likeByMe: Boolean = false,
-    var countLiked: Int = 0,
-    var countComment: Int = 0,
-    var countShare: Int = 0
+    val textOfPost: String? = null,
+    val dateOfPost: String? = null,
+    val nameAuthor: String?,
+    var repostsCount: Int,
+    var likesCount: Int,
+    var isLikedByUser: Boolean,
+    var isRepostedByUser: Boolean,
+    val postType: PostType = PostType.POST,
+    val sourceId: Long? = null,
+    val address: String? = null,
+    val coordinates: Coordinates? = null,
+    val sourceVideo: String? = null,
+    val sourceAd: String? = null,
+    val attachmentId: String? = null
 ) {
     companion object {
-        fun fromModel(model: PostModel, userId: Long) = PostResponseDto(
-            id = model.id,
-            author = model.author,
-            content = model.content,
-            created = model.created,
-            location = model.location,
-            typePost = model.typePost,
-            sourceHTTP = model.sourceHTTP,
-            likeByMe = model.likeByMe,
-            countLiked = model.countLiked,
-            countComment = model.countComment,
-            countShare = model.countShare
-        )
+        fun fromModel(postModel: PostModel, userId: Long): PostResponseDto {
+            val isLikedByUser = postModel.likedUserIdList.contains(userId)
+            val isRepostedByUser = postModel.repostedUserIdList.contains(userId)
+            val likesCount = postModel.likedUserIdList.size
+            val repostsCount = postModel.repostedUserIdList.size
+
+            val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - HH:mm:ss Z");
+            val dateOfPostString = postModel.dateOfPost?.format(formatter)
+
+            return PostResponseDto(
+                id = postModel.id,
+                textOfPost = postModel.textOfPost,
+                dateOfPost = dateOfPostString,
+                nameAuthor = postModel.user?.username,
+                likesCount = likesCount,
+                isLikedByUser = isLikedByUser,
+                isRepostedByUser = isRepostedByUser,
+                repostsCount = repostsCount,
+                postType = postModel.postType,
+                sourceId = postModel.sourceId,
+                address = postModel.address,
+                coordinates = postModel.coordinates,
+                sourceVideo = postModel.sourceVideo,
+                sourceAd = postModel.sourceAd,
+                attachmentId = postModel.attachment?.id
+            )
+        }
     }
 }

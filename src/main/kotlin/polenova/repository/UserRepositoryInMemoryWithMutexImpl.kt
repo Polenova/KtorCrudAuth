@@ -5,34 +5,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import polenova.model.UserModel
 
-class UserRepositoryInMemoryWithMutexImpl : UserRepository {
+class UserRepositoryInMemoryWithAtomicImpl : UserRepository {
     private var nextId = atomic(0L)
     private val items = mutableListOf<UserModel>()
     private val mutex = Mutex()
 
-    override suspend fun getAll(): List<UserModel> {
-        mutex.withLock {
-            return items.toList()
-        }
-    }
+    override suspend fun getAll(): List<UserModel> = items.toList()
 
-    override suspend fun getById(id: Long): UserModel? {
-        mutex.withLock {
-            return items.find { it.id == id }
-        }
-    }
-
-    override suspend fun getByIds(ids: Collection<Long>): List<UserModel> {
-        mutex.withLock {
-            return items.filter { ids.contains(it.id) }
-        }
-    }
-
-    override suspend fun getByUsername(username: String): UserModel? {
-        mutex.withLock {
-            return items.find { it.username == username }
-        }
-    }
+    override suspend fun getById(id: Long): UserModel? = items.find { it.id == id }
 
     override suspend fun getByIdPassword(id: Long, password: String): UserModel? {
         val item = items.find { it.id == id }
@@ -43,24 +23,29 @@ class UserRepositoryInMemoryWithMutexImpl : UserRepository {
         }
     }
 
+    override suspend fun getByIds(ids: Collection<Long>): List<UserModel> = items.filter { ids.contains(it.id) }
+
+    override suspend fun getByUsername(username: String): UserModel? = items.find { it.username == username }
+
     override suspend fun save(item: UserModel): UserModel {
-        mutex.withLock {
-            return when (val index = items.indexOfFirst { it.id == item.id }) {
-                -1 -> {
-                    val copy = item.copy(id = nextId.incrementAndGet())
+        return when (val index = items.indexOfFirst { it.id == item.id }) {
+            -1 -> {
+                val copy = item.copy(id = nextId.incrementAndGet())
+                mutex.withLock {
                     items.add(copy)
-                    copy
                 }
-                else -> {
-                    val copy = items[index].copy(username = item.username, password = item.password)
+                copy
+            }
+            else -> {
+                val copy = items[index].copy(username = item.username, password = item.password)
+                mutex.withLock {
                     items[index] = copy
-                    copy
                 }
+                copy
             }
         }
     }
 }
-
     /*override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
         return when (val index = items.indexOfFirst { it.id == id}) {
             -1 -> {

@@ -20,16 +20,12 @@ class UserService(
     private val passwordEncoder: PasswordEncoder
 ) {
 
-    suspend fun getByUserName(username: String): UserModel? {
-        return repo.getByUsername(username)
-    }
-
     suspend fun getModelByIdPassword(id: Long, password: String): UserModel? {
         return repo.getByIdPassword(id, password)
     }
 
-    suspend fun getModelById(id: Long): UserModel? {
-        return repo.getById(id)
+    suspend fun getByUserName(username: String): UserModel? {
+        return repo.getByUsername(username)
     }
 
     @KtorExperimentalAPI
@@ -56,7 +52,8 @@ class UserService(
         if (!passwordEncoder.matches(input.password, model.password)) {
             throw InvalidPasswordException("Wrong password!")
         }
-        val token = tokenService.generate(model.copy())
+
+        val token = tokenService.generate(model)
         return AuthenticationResponseDto(token)
     }
 
@@ -71,4 +68,9 @@ class UserService(
             return AuthenticationResponseDto(token)
         }
     }
+
+    /*@KtorExperimentalAPI
+    suspend fun saveFirebaseToken(id: Long, firebaseToken: String) {
+        repo.saveFirebaseToken(id, firebaseToken) ?: throw NotFoundException()
+    }*/
 }

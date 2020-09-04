@@ -27,10 +27,7 @@ import org.kodein.di.ktor.kodein
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import polenova.exception.*
-import polenova.repository.PostRepository
-import polenova.repository.PostRepositoryInMemoryWithMutexImpl
-import polenova.repository.UserRepository
-import polenova.repository.UserRepositoryInMemoryWithMutexImpl
+import polenova.repository.*
 import polenova.service.*
 import javax.naming.ConfigurationException
 
@@ -93,11 +90,11 @@ fun Application.module(testing: Boolean = false) {
             ?.getString()
             ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
-        bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
+        //bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
         bind<PostRepository>() with eagerSingleton { PostRepositoryInMemoryWithMutexImpl() }
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
-        bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithMutexImpl() }
+        bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithAtomicImpl() }
         bind<UserService>() with eagerSingleton {
             UserService(instance(), instance(), instance()).apply {
                 runBlocking {

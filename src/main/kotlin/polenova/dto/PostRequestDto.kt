@@ -1,14 +1,15 @@
 package polenova.dto
 
+import polenova.model.Coordinates
 import polenova.model.PostModel
-import polenova.model.TypePost
+import polenova.model.PostType
 
 class PostRequestDto (
-    val id: Long,
-    val content: String? = null,
-    val author: String,
-    val created: String,
-    val postType: TypePost = TypePost.POST,
-    val source: PostModel? = null,
-    val sourceHTTP: String? = null
+    val textOfPost: String? = null,
+    val postType: PostType = PostType.POST,
+    val address: String? = null,
+    val coordinates: Coordinates? = null,
+    val sourceVideo: String? = null,
+    val sourceAd: String? = null,
+    val attachmentId: String? = null
 )
