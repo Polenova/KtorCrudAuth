@@ -6,5 +6,4 @@ data class UserModel(
     val id: Long = 0,
     val username: String,
     val password: String
-    //val firebaseToken: String? = null
 ): Principal

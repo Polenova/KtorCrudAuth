@@ -1,7 +1,6 @@
 package polenova.dto
 
 import polenova.model.Coordinates
-import polenova.model.PostModel
 import polenova.model.PostType
 
 class PostRequestDto (
