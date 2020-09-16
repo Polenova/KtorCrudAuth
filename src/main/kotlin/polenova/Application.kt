@@ -112,7 +112,7 @@ fun Application.module(testing: Boolean = false) {
         }
     }
     install(Authentication) {
-        jwt {
+        jwt ("jwt") {
             val jwtService by kodein().instance<JWTTokenService>()
             verifier(jwtService.verifier)
             val userService by kodein().instance<UserService>()
