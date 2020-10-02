@@ -26,10 +26,10 @@ class ApplicationTest {
     private val configure: Application.() -> Unit = {
         (environment.config as MapApplicationConfig).apply {
             put("ncraft.upload.dir", uploadPath)
-            /*put("polenova.fcm.password", "TEST_FCM_PASSWORD")
+            put("polenova.fcm.password", "TEST_FCM_PASSWORD")
             put("polenova.fcm.salt", "TEST_FCM_SALT")
             put("polenova.fcm.db-url", "TEST_FCM_DB_URL")
-            put("polenova.fcm.path", "./fcm/fcm-encrypted.json")*/
+            put("polenova.fcm.path", "./fcm/fcm-encrypted.json")
         }
         module(testing = true)
     }

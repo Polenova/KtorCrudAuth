@@ -28,6 +28,7 @@ class UserRepositoryInMemoryWithAtomicImpl : UserRepository {
     override suspend fun getByUsername(username: String): UserModel? = items.find { it.username == username }
 
     override suspend fun save(item: UserModel): UserModel {
+        
         return when (val index = items.indexOfFirst { it.id == item.id }) {
             -1 -> {
                 val copy = item.copy(id = nextId.incrementAndGet())
@@ -38,6 +39,21 @@ class UserRepositoryInMemoryWithAtomicImpl : UserRepository {
             }
             else -> {
                 val copy = items[index].copy(username = item.username, password = item.password)
+                mutex.withLock {
+                    items[index] = copy
+                }
+                copy
+            }
+        }
+    }
+
+    override suspend fun saveFirebaseToken(id: Long, firebaseToken: String): UserModel? {
+        return when (val index = items.indexOfFirst { it.id == id}) {
+            -1 -> {
+                null
+            }
+            else -> {
+                val copy = items[index].copy(firebaseToken = firebaseToken)
                 mutex.withLock {
                     items[index] = copy
                 }
