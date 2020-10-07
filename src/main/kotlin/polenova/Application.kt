@@ -1,27 +1,21 @@
 package polenova
 
-import RoutingV1
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
+import io.ktor.application.*
 import io.ktor.auth.Authentication
+import io.ktor.auth.UserPasswordCredential
 import io.ktor.auth.basic
 import io.ktor.auth.jwt.jwt
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.NotFoundException
-import io.ktor.features.ParameterConversionException
-import io.ktor.features.StatusPages
-import io.ktor.gson.gson
-import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.routing.Routing
+import io.ktor.response.*
+import io.ktor.request.*
+import io.ktor.routing.*
+import io.ktor.http.*
+import io.ktor.gson.*
+import io.ktor.features.*
 import io.ktor.server.cio.EngineMain
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
-import org.kodein.di.generic.bind
-import org.kodein.di.generic.eagerSingleton
-import org.kodein.di.generic.instance
-import org.kodein.di.generic.with
+import org.bouncycastle.openssl.PasswordException
+import org.kodein.di.generic.*
 import org.kodein.di.ktor.KodeinFeature
 import org.kodein.di.ktor.kodein
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -29,6 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import polenova.exception.*
 import polenova.repository.*
 import polenova.service.*
+import polenova.repository.PostRepository
+import polenova.repository.PostRepositoryInMemoryWithMutexImpl
+import polenova.repository.UserRepository
+import polenova.repository.UserRepositoryInMemoryWithAtomicImpl
 import javax.naming.ConfigurationException
 
 fun main(args: Array<String>) {
@@ -86,8 +84,7 @@ fun Application.module(testing: Boolean = false) {
         }
     }
     install(KodeinFeature) {
-        constant(tag = "upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")
-            ?.getString()
+        constant(tag = "upload-dir") with (environment.config.propertyOrNull("polenova.upload.dir")?.getString()
             ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
         bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
@@ -95,13 +92,7 @@ fun Application.module(testing: Boolean = false) {
         bind<PostService>() with eagerSingleton { PostService(instance()) }
         bind<FileService>() with eagerSingleton { FileService(instance(tag = "upload-dir")) }
         bind<UserRepository>() with eagerSingleton { UserRepositoryInMemoryWithAtomicImpl() }
-        bind<UserService>() with eagerSingleton {
-            UserService(instance(), instance(), instance()).apply {
-                runBlocking {
-                    this@apply.save("vasya", "password")
-                }
-            }
-        }
+        bind<UserService>() with eagerSingleton { UserService(instance(), instance(), instance()) }
         constant(tag = "fcm-password") with (environment.config.propertyOrNull("polenova.fcm.password")?.getString()
             ?: throw ConfigurationException("FCM Password is not specified"))
         constant(tag = "fcm-salt") with (environment.config.propertyOrNull("polenova.fcm.salt")?.getString()
@@ -159,3 +150,5 @@ fun Application.module(testing: Boolean = false) {
         routingV1.setup(this)
     }
 }
+
+
