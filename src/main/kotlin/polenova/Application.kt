@@ -110,6 +110,7 @@ fun Application.module(testing: Boolean = false) {
                 instance(tag = "fcm-path")
             )
         }
+    }
 
         bind<RoutingV1>() with eagerSingleton {
             RoutingV1(
